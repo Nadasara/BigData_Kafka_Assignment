@@ -1,6 +1,7 @@
 package com.example.consumer.messaging;
 
 import com.example.avro.OrderEvent;
+import com.example.consumer.model.AggregateResult;
 import com.example.consumer.model.ProductAggregate;
 import com.example.consumer.service.OrderAggregationService;
 import org.slf4j.Logger;
@@ -21,8 +22,12 @@ public class OrderListener {
 
     @KafkaListener(topics = "${order.topic}", containerFactory = "orderListenerContainerFactory")
     public void consume(@Payload OrderEvent event) {
-        ProductAggregate aggregate = aggregationService.updateAggregate(event);
-        log.info("Processed order {} for product {} at price {}. Running average: {} (count {})",
-                event.getOrderId(), event.getProduct(), event.getPrice(), aggregate.average(), aggregate.count());
+        AggregateResult aggregateResult = aggregationService.updateAggregate(event);
+        ProductAggregate productAggregate = aggregateResult.product();
+        ProductAggregate globalAggregate = aggregateResult.global();
+        log.info("Processed order {} for product {} at price {}. Product avg: {} (count {}), Global avg: {} (count {})",
+            event.getOrderId(), event.getProduct(), event.getPrice(),
+            productAggregate.average(), productAggregate.count(),
+            globalAggregate.average(), globalAggregate.count());
     }
 }
