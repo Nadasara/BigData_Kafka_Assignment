@@ -2,11 +2,8 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY pom.xml .
-COPY mvnw mvnw
-COPY .mvn .mvn
-RUN chmod +x mvnw
-COPY src src
-RUN ./mvnw -q -B -DskipTests clean package
+COPY src ./src
+RUN mvn -q -B -DskipTests clean package
 
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
