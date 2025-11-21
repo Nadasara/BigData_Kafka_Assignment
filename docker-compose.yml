@@ -1,89 +1,101 @@
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.1
-    container_name: kafka-zookeeper
+    container_name: zookeeper
+    restart: unless-stopped
+    ports:
+      - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     healthcheck:
-      test: ["CMD", "bash", "-c", "echo srvr | nc -w 2 localhost 2181 | grep -q Mode"]
+      test: ["CMD", "bash", "-c", "cub zk-ready localhost 2181"]
       interval: 10s
       timeout: 5s
       retries: 5
-    ports:
-      - "2181:2181"
     networks:
       - kafka-net
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
-    container_name: kafka-broker
+    container_name: kafka
+    restart: unless-stopped
     depends_on:
       zookeeper:
         condition: service_healthy
     ports:
-      - "29092:29092"
       - "9092:9092"
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     healthcheck:
-      test: ["CMD", "bash", "-c", "kafka-topics --bootstrap-server localhost:9092 --list"]
+      test: ["CMD", "bash", "-c", "cub kafka-ready -b localhost:9092 1 20"]
       interval: 10s
-      timeout: 10s
-      retries: 10
+      timeout: 5s
+      retries: 5
     networks:
       - kafka-net
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.1
     container_name: schema-registry
+    restart: unless-stopped
     depends_on:
       kafka:
         condition: service_healthy
+    ports:
+      - "8081:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
-    ports:
-      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - kafka-net
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
+    restart: unless-stopped
     depends_on:
       kafka:
         condition: service_healthy
       schema-registry:
-        condition: service_started
+        condition: service_healthy
+    ports:
+      - "8080:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
-    ports:
-      - "8080:8080"
     networks:
       - kafka-net
 
-  producer-app:
+  producer-service:
     build:
       context: ./producer
-    container_name: order-producer
+      dockerfile: Dockerfile
+    container_name: producer-service
+    restart: unless-stopped
     depends_on:
       kafka:
         condition: service_healthy
       schema-registry:
-        condition: service_started
+        condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
@@ -94,15 +106,17 @@ services:
     networks:
       - kafka-net
 
-  consumer-app:
+  consumer-service:
     build:
       context: ./consumer
-    container_name: order-consumer
+      dockerfile: Dockerfile
+    container_name: consumer-service
+    restart: unless-stopped
     depends_on:
       kafka:
         condition: service_healthy
       schema-registry:
-        condition: service_started
+        condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
