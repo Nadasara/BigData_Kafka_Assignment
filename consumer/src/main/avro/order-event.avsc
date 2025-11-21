@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "OrderEvent",
+  "namespace": "com.example.avro",
+  "fields": [
+    { "name": "orderId", "type": "string" },
+    { "name": "product", "type": "string" },
+    { "name": "price", "type": "double" },
+    {
+      "name": "createdAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
+  ]
+}
