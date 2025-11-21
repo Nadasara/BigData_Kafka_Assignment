@@ -13,4 +13,4 @@ WORKDIR /app
 ENV JAVA_OPTS=""
 COPY --from=build /workspace/target/consumer-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8081
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
