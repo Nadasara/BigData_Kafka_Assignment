@@ -20,7 +20,7 @@ public class OrderListener {
         this.aggregationService = aggregationService;
     }
 
-    @KafkaListener(topics = "${order.topic}", containerFactory = "orderListenerContainerFactory")
+    @KafkaListener(topics = {"${order.topic}", "${order.retry-topic}"}, containerFactory = "orderListenerContainerFactory")
     public void consume(@Payload OrderEvent event) {
         AggregateResult aggregateResult = aggregationService.updateAggregate(event);
         ProductAggregate productAggregate = aggregateResult.product();

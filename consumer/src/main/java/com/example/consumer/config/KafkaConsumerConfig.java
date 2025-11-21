@@ -52,14 +52,26 @@ public class KafkaConsumerConfig {
 
     @Bean
     public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(KafkaTemplate<Object, Object> template,
+                                                                       @Value("${order.topic}") String orderTopic,
+                                                                       @Value("${order.retry-topic}") String retryTopic,
                                                                        @Value("${order.dlq-topic}") String dlqTopic) {
-        return new DeadLetterPublishingRecoverer(template,
-                (record, ex) -> new TopicPartition(dlqTopic, record.partition()));
+        return new DeadLetterPublishingRecoverer(template, (record, ex) -> {
+            String destination = record.topic().equals(orderTopic) ? retryTopic : dlqTopic;
+            return new TopicPartition(destination, record.partition());
+        });
     }
 
     @Bean
     public NewTopic ordersTopic(@Value("${order.topic}") String topic) {
         return TopicBuilder.name(topic)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic ordersRetryTopic(@Value("${order.retry-topic}") String retryTopic) {
+        return TopicBuilder.name(retryTopic)
                 .partitions(3)
                 .replicas(1)
                 .build();
