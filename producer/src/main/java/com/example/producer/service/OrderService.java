@@ -27,7 +27,7 @@ public class OrderService {
     public void sendOrder(OrderRequest request) {
         OrderEvent payload = buildEvent(request);
         kafkaTemplate.send(orderTopic, payload.getOrderId().toString(), payload)
-                .whenComplete(this::logResult);
+            .whenComplete(this::logResult);
     }
 
     public int sendOrders(List<OrderRequest> requests) {
