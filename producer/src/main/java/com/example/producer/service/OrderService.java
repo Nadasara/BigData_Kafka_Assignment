@@ -17,11 +17,14 @@ public class OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
     private final String orderTopic;
+    private final RandomOrderGenerator randomOrderGenerator;
 
     public OrderService(KafkaTemplate<String, OrderEvent> kafkaTemplate,
-                        @Value("${order.topic}") String orderTopic) {
+                        @Value("${order.topic}") String orderTopic,
+                        RandomOrderGenerator randomOrderGenerator) {
         this.kafkaTemplate = kafkaTemplate;
         this.orderTopic = orderTopic;
+        this.randomOrderGenerator = randomOrderGenerator;
     }
 
     public void sendOrder(OrderRequest request) {
@@ -36,6 +39,16 @@ public class OrderService {
         }
         requests.forEach(this::sendOrder);
         return requests.size();
+    }
+
+    public void sendRandomOrder(String preferredProduct) {
+        OrderRequest request = randomOrderGenerator.randomOrder(preferredProduct);
+        sendOrder(request);
+    }
+
+    public int sendRandomOrders(int count, String preferredProduct) {
+        List<OrderRequest> requests = randomOrderGenerator.randomOrders(count, preferredProduct);
+        return sendOrders(requests);
     }
 
     private OrderEvent buildEvent(OrderRequest request) {
