@@ -9,8 +9,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       properties:
-        "[schema.registry.url]": ${SCHEMA_REGISTRY_URL:http://localhost:8081}
-        "[specific.avro.reader]": true
+        'schema.registry.url': ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+        'specific.avro.reader': true
     listener:
       ack-mode: record
       concurrency: 3
@@ -18,13 +18,13 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       properties:
-        "[schema.registry.url]": ${SCHEMA_REGISTRY_URL:http://localhost:8081}
-        "[auto.register.schemas]": true
-        "[specific.avro.reader]": true
+        'schema.registry.url': ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+        'auto.register.schemas': true
+        'specific.avro.reader': true
     admin:
       fail-fast: true
       properties:
-        "[bootstrap.servers]": ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+        'bootstrap.servers': ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
 server:
   port: ${SERVER_PORT:8081}
 order:
@@ -32,5 +32,5 @@ order:
   dlq-topic: ${ORDER_DLQ_TOPIC:orders.v1.dlq}
 logging:
   level:
-    "[org.springframework.kafka]": INFO
-    "[com.example.consumer]": INFO
+    org.springframework.kafka: INFO
+    com.example.consumer: INFO

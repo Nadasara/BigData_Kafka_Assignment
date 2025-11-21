@@ -4,24 +4,24 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
     properties:
-      "[schema.registry.url]": ${SCHEMA_REGISTRY_URL:http://localhost:8081}
-      "[specific.avro.reader]": true
-      "[auto.register.schemas]": true
+      'schema.registry.url': ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+      'specific.avro.reader': true
+      'auto.register.schemas': true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
       acks: all
       retries: 5
       properties:
-        "[enable.idempotence]": true
+        'enable.idempotence': true
     admin:
       fail-fast: true
       properties:
-        "[bootstrap.servers]": ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+        'bootstrap.servers': ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
 server:
   port: ${SERVER_PORT:8080}
 order:
   topic: ${ORDER_TOPIC:orders.v1}
 logging:
   level:
-    "[com.example.producer]": INFO
+    com.example.producer: INFO
